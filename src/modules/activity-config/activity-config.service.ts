@@ -7,7 +7,7 @@ export interface ActivityConfig {
 
 @Injectable()
 export class ActivityConfigService {
-  url: string = 'http://google.com';
+  url: string = 'https://math-decoder-config.onrender.com/';
 
   getActivityConfig(): string {
     // Return activity configuration page details
