@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ActivityParamsService } from './activity-params.service';
-import type { Param } from '../../models/intefaces';
+import { Param } from '../../models/models';
 
 @Controller('activity/params')
 export class ActivityParamsController {

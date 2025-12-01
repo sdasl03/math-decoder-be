@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import {
-  ActivityAnalytics,
-  ActivityAnalyticsDefinition,
+  ActivityAnalytics, ActivityAnalyticsDefinition,
   UserAnalytics,
-} from 'src/models/intefaces';
+} from '../../models/models';
 
 @Injectable()
 export class ActivityAnalyticsService {
@@ -72,7 +71,7 @@ export class ActivityAnalyticsService {
   ];
 
   getActivityAnalytics(activityId: string): UserAnalytics[] {
-    // Return analytics data for a specific user
+    //return analytics for a specific activity
     return (
       this.activitiesAnalaytics.find((activity) => activity.id === activityId)
         ?.userAnalytics || []

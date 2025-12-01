@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Param } from '../../models/intefaces';
+import { Param } from '../../models/models';
 
 @Injectable()
 export class ActivityParamsService {

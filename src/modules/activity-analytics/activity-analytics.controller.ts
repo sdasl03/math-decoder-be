@@ -1,10 +1,8 @@
 import { Controller, Post, Body, Get } from '@nestjs/common';
 import { ActivityAnalyticsService } from './activity-analytics.service';
-import type {
-  ActivityAnalyticsDefinition,
+import type {   ActivityAnalyticsDefinition,
   ConsultAnalyticsDto,
-  UserAnalytics,
-} from 'src/models/intefaces';
+  UserAnalytics, } from '../../models/models';
 
 @Controller('activity/analytics')
 export class ActivityAnalyticsController {
