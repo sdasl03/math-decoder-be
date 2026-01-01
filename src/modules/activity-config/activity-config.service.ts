@@ -1,16 +1,14 @@
 import { Injectable } from '@nestjs/common';
 
-export interface ActivityConfig {
-  id: string;
-  config: string;
-}
 
 @Injectable()
 export class ActivityConfigService {
   url: string = 'https://math-decoder-config.onrender.com/';
 
-  getActivityConfig(): string {
+  getActivityConfig(activityId: string): string {
     // Return activity configuration page details
+    //fetch the config according to activityId
+    console.log(`Fetching config for activityId: ${activityId}`);
     return this.url;
   }
 }
