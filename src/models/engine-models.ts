@@ -27,8 +27,11 @@ export interface MathActivity {
     id: string;
     theme: MathTheme;
     level: number;
-    grading: GradingStrategy | null;
+    grading: GradingMethod | null;
     metadata?: {
+        gradingMethod?: GradingMethod;
+        autoGradableCount?: number;
+        exerciseIds?: string[];
         createdAt?: Date;
         estimatedDurationMinutes?: number;
     };
@@ -39,12 +42,55 @@ export interface MathExerciseGenerator {
     canGenerate(context: GeneratorContext): boolean;
     generate(context: GeneratorContext): MathExercise[];
 }
-export interface GradingStrategy {
-    grade(submission: ExerciseSubmission[]): string;
-}
 export interface ExerciseSubmission {
     activityId: string;
     studentId: string;
     exerciseId: string;
     answer: unknown;
+}
+// In your existing models, let's define these additional interfaces:
+
+// Add to your models/engine-models.ts or create grading-models.ts
+export interface GradingResult {
+    exerciseId: string;
+    isCorrect: boolean;
+    score: number; // 0-1 scale
+    feedback: string;
+    expectedSolution?: unknown;
+    userAnswer?: unknown;
+    metadata?: {
+        gradingMethod: GradingMethod;
+        gradedAt: Date;
+        processingTimeMs: number;
+    };
+}
+
+export interface GradingContext {
+    activityId: string;
+    studentId: string;
+    submissionTime: Date;
+    exercise: MathExercise;
+    attemptNumber?: number;
+}
+
+export interface StepGradingResult {
+    stepId: string;
+    isCorrect: boolean;
+    score: number;
+    feedback: string;
+}
+
+
+// grading/grading-strategy.interface.ts
+export interface GradingStrategy {
+    readonly method: GradingMethod;
+    
+    grade(
+        exercise: MathExercise, 
+        userAnswer: unknown, 
+        context?: Partial<GradingContext>
+    ): GradingResult;
+    
+    canGrade(exercise: MathExercise): boolean;
+    supportsPartialCredit(): boolean;
 }
