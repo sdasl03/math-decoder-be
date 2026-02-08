@@ -18,11 +18,16 @@ export const ADDITION_PROFILES: Record<number, AdditionLevelProfile> = {
 
 // Seed offset to ensure different RNG sequence than other generators
 const ADDITION_SEED_OFFSET = 31;
+// Number of exercises to generate per context
+const EXERCISES_PER_GENERATION = 10;
 
 @Injectable()
 export class AdditionGenerator implements MathExerciseGenerator {
 
     canGenerate(ctx: GeneratorContext): boolean {
+        if (!ctx?.theme || !Number.isInteger(ctx?.level)) {
+            return false;
+        }
         return ctx.theme === 'arithmetic' as MathTheme && ctx.level >= 1;
     }
 
@@ -32,10 +37,9 @@ export class AdditionGenerator implements MathExerciseGenerator {
 
         const rng = new SeededRandom(ctx.seed + ADDITION_SEED_OFFSET);
 
-
         const exercises: MathExercise[] = [];
 
-        while (exercises.length < 10) {
+        while (exercises.length < EXERCISES_PER_GENERATION) {
             const a = rng.int(profile.min, profile.max);
 
             const maxB = profile.allowCarry

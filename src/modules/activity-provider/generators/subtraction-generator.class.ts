@@ -18,11 +18,16 @@ const SUBTRACTION_PROFILES: Record<number, SubtractionLevelProfile> = {
 
 // Seed offset to ensure different RNG sequence than other generators
 const SUBTRACTION_SEED_OFFSET = 47;
+// Number of exercises to generate per context
+const EXERCISES_PER_GENERATION = 10;
 
 @Injectable()
 export class SubtractionGenerator implements MathExerciseGenerator {
 
   canGenerate(ctx: GeneratorContext): boolean {
+    if (!ctx?.theme || !Number.isInteger(ctx?.level)) {
+      return false;
+    }
     return ctx.theme === ('arithmetic' as MathTheme) && ctx.level >= 1;
   }
 
@@ -33,9 +38,7 @@ export class SubtractionGenerator implements MathExerciseGenerator {
     const rng = new SeededRandom(ctx.seed + SUBTRACTION_SEED_OFFSET);
     const exercises: MathExercise[] = [];
 
-    const TARGET = 10;
-
-    while (exercises.length < TARGET) {
+    while (exercises.length < EXERCISES_PER_GENERATION) {
       const a = rng.int(profile.min, profile.max);
 
       const b = profile.allowBorrow

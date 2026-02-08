@@ -4,6 +4,11 @@ import { AutoGradingStrategy } from "./auto-grading.class";
 import { ManualGradingStrategy } from "./manual-grading.class";
 import { ClockService } from "src/utils/clock.service";
 
+// Gradable solution types
+const GRADABLE_TYPES = ['number', 'string', 'boolean'];
+// Hybrid review flag message
+const FLAGGED_FOR_REVIEW = 'This has been flagged for manual review.';
+
 @Injectable()
 export class HybridGradingStrategy implements GradingStrategy {
     readonly method = 'hybrid' as const;
@@ -37,9 +42,10 @@ export class HybridGradingStrategy implements GradingStrategy {
             
             return {
                 ...autoResult,
-                feedback: `${autoResult.feedback} This has been flagged for manual review.`,
+                feedback: `${autoResult.feedback} ${FLAGGED_FOR_REVIEW}`,
                 metadata: {
-                    ...autoResult.metadata,
+                    gradingMethod: autoResult.metadata?.gradingMethod || this.method,
+                    gradedAt: autoResult.metadata?.gradedAt || this.clock.now(),
                     processingTimeMs: autoResult.metadata?.processingTimeMs || 0
                 }
             };
@@ -51,12 +57,11 @@ export class HybridGradingStrategy implements GradingStrategy {
     
     private shouldAcceptAutoGrade(result: GradingResult, exercise: MathExercise): boolean {
         // High confidence auto-grading for simple types
-        const simpleTypes = ['number', 'string', 'boolean'];
-        const isSimpleType = simpleTypes.includes(typeof exercise.solution);
+        const isSimpleType = GRADABLE_TYPES.includes(typeof (exercise?.solution ?? ''));
         
         // For complex answers (arrays, objects), we might want manual review
-        const isComplexAnswer = Array.isArray(exercise.solution) || 
-                                (typeof exercise.solution === 'object' && exercise.solution !== null);
+        const isComplexAnswer = Array.isArray(exercise?.solution) || 
+                                (typeof exercise?.solution === 'object' && exercise?.solution !== null);
         
         // Accept auto-grade for simple types when correct
         if (isSimpleType && result.isCorrect) {

@@ -1,5 +1,17 @@
 export type MathTheme = 'algebra' | 'geometry' | 'calculus' | 'statistics';
 export type GradingMethod = 'automatic' | 'manual' | 'hybrid';
+
+/**
+ * Activity configuration interface
+ */
+export interface IActivityConfig {
+  id: string;
+  theme: string;
+  level: number;
+  numberOfExercises: number;
+  gradingMethod: string;
+}
+
 export interface ActivityConfig {
     theme: MathTheme;
     level: number;

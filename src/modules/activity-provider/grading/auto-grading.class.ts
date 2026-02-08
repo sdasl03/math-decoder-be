@@ -1,21 +1,41 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { GradingStrategy, MathExercise, GradingResult } from "src/models/engine-models";
 import { ClockService } from "src/utils/clock.service";
 
+// Gradable solution types
+const GRADABLE_TYPES = ['number', 'string', 'boolean'];
+
+// Hard-coded feedback messages - consider moving to i18n service
+const FEEDBACK_CORRECT = 'Correct!';
+const FEEDBACK_INCORRECT = 'Incorrect. Try again!';
+const FEEDBACK_GRADING_ERROR = 'Unable to automatically grade this exercise.';
+
+// Numeric comparison tolerance for floating-point numbers
+const NUMERIC_COMPARISON_TOLERANCE = 0.0001;
+
+const FEEDBACK_MAP: Record<string, string> = {
+    'algebra': 'Check your algebraic manipulation steps.',
+    'arithmetic': 'Review your arithmetic operations.',
+    'geometry': 'Verify your geometric reasoning.',
+    'calculus': 'Double-check your differentiation/integration.'
+};
+
+// grading/auto-grading.strategy.ts
 @Injectable()
 export class AutoGradingStrategy implements GradingStrategy {
     readonly method = 'automatic' as const;
+    private readonly logger = new Logger(AutoGradingStrategy.name);
     
     constructor(private readonly clock: ClockService) {}
     
     canGrade(exercise: MathExercise): boolean {
         // Check if solution exists and is of a gradable type
-        if (!exercise.solution) return false;
+        if (!exercise?.solution) return false;
         
         const solutionType = typeof exercise.solution;
-        return ['number', 'string', 'boolean'].includes(solutionType) || 
+        return GRADABLE_TYPES.includes(solutionType) || 
                (Array.isArray(exercise.solution) && exercise.solution.every(item => 
-                   typeof item === 'number' || typeof item === 'string'
+                   GRADABLE_TYPES.includes(typeof item)
                ));
     }
     
@@ -49,12 +69,16 @@ export class AutoGradingStrategy implements GradingStrategy {
             
         } catch (error) {
             // Graceful fallback - log and return failed result
+            this.logger.error(
+                `Auto-grading failed for exercise ${exercise?.id}`,
+                error instanceof Error ? error.stack : String(error)
+            );
             return {
-                exerciseId: exercise.id,
+                exerciseId: exercise?.id || 'unknown',
                 isCorrect: false,
                 score: 0,
-                feedback: 'Unable to automatically grade this exercise.',
-                expectedSolution: exercise.solution,
+                feedback: FEEDBACK_GRADING_ERROR,
+                expectedSolution: exercise?.solution,
                 userAnswer,
                 metadata: {
                     gradingMethod: this.method,
@@ -71,7 +95,7 @@ export class AutoGradingStrategy implements GradingStrategy {
         
         // Numeric comparison with tolerance
         if (typeof expected === 'number' && typeof actual === 'number') {
-            return Math.abs(expected - actual) < 0.0001;
+            return Math.abs(expected - actual) < NUMERIC_COMPARISON_TOLERANCE;
         }
         
         // Array comparison
@@ -90,18 +114,11 @@ export class AutoGradingStrategy implements GradingStrategy {
     
     private generateFeedback(isCorrect: boolean, exercise: MathExercise): string {
         if (isCorrect) {
-            return 'Correct!';
+            return FEEDBACK_CORRECT;
         }
         
         // Topic-specific feedback based on metadata
         const topic = exercise.metadata?.topic;
-        const feedbackMap: Record<string, string> = {
-            'algebra': 'Check your algebraic manipulation steps.',
-            'arithmetic': 'Review your arithmetic operations.',
-            'geometry': 'Verify your geometric reasoning.',
-            'calculus': 'Double-check your differentiation/integration.'
-        };
-        
-        return feedbackMap[topic || ''] || 'Incorrect. Try again!';
+        return FEEDBACK_MAP[topic || ''] || FEEDBACK_INCORRECT;
     }
 }

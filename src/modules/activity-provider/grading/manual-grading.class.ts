@@ -2,6 +2,9 @@ import { Injectable } from "@nestjs/common";
 import { GradingStrategy, MathExercise, GradingResult } from "src/models/engine-models";
 import { ClockService } from "src/utils/clock.service";
 
+// Manual grading feedback message
+const FEEDBACK_PENDING_REVIEW = 'This submission is pending review.';
+
 @Injectable()
 export class ManualGradingStrategy implements GradingStrategy {
     readonly method = 'manual' as const;
@@ -24,7 +27,7 @@ export class ManualGradingStrategy implements GradingStrategy {
             exerciseId: exercise.id,
             isCorrect: false, // Unknown until manually reviewed
             score: 0,
-            feedback: 'Submitted for manual review. You will receive feedback soon.',
+            feedback: FEEDBACK_PENDING_REVIEW,
             expectedSolution: exercise.solution,
             userAnswer,
             metadata: {

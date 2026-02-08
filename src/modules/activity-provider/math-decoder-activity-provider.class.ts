@@ -1,9 +1,12 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, BadRequestException } from "@nestjs/common";
 import { MathExercise, ActivityConfig, MathActivity, GeneratorContext, ExerciseSubmission, GradingResult, GradingMethod, GradingContext } from "src/models/engine-models";
 import { CompositeExerciseGenerator } from "./generators/composite-generator.class";
 import { GradingStrategySelector } from "./grading/grading-selector.class";
 import { ClockService } from "src/utils/clock.service";
 import { UuidService } from "src/utils/uuid.service";
+
+// Constants for configurable values
+const EXERCISE_DIFFICULTY_TOLERANCE = 1;  // Difficulty offset when selecting exercises
 
 @Injectable()
 export class MathDecoderActivityProvider {
@@ -23,7 +26,7 @@ export class MathDecoderActivityProvider {
         const ctx: GeneratorContext = {
             theme: config.theme,
             level: config.level,
-            seed: Date.now(),
+            seed: this.clock.currentTimeMs(),
         };
         
         const candidates = this.generator.generate(ctx);
@@ -38,12 +41,17 @@ export class MathDecoderActivityProvider {
     gradeSubmission(
         submission: ExerciseSubmission
     ): GradingResult {
-        const startTime = Date.now();
+        // Validate input
+        if (!submission?.exerciseId) {
+            throw new BadRequestException('Exercise ID is required');
+        }
+        
+        const startTime = this.clock.currentTimeMs();
         
         // Find the exercise
         const exercise = this.exerciseCache.get(submission.exerciseId);
         if (!exercise) {
-            throw new Error(`Exercise not found: ${submission.exerciseId}`);
+            throw new BadRequestException(`Exercise not found: ${submission.exerciseId}`);
         }
         
         // Get grading method (could be stored per activity or use default)
@@ -55,7 +63,7 @@ export class MathDecoderActivityProvider {
         const context: Partial<GradingContext> = {
             activityId: submission.activityId,
             studentId: submission.studentId,
-            submissionTime: new Date(),
+            submissionTime: this.clock.now(),
             exercise
         };
         
@@ -134,6 +142,6 @@ export class MathDecoderActivityProvider {
     
     selectExercises(candidates: MathExercise[], config: ActivityConfig): MathExercise[] {
         const level = config.level;
-        return candidates.filter(e => Math.abs(e.difficulty - level) <= 1);
+        return candidates.filter(e => Math.abs(e.difficulty - level) <= EXERCISE_DIFFICULTY_TOLERANCE);
     }
 }

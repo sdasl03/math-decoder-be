@@ -1,4 +1,5 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { ClockService } from '../clock.service';
 
 interface CacheEntry<T> {
     value: T;
@@ -10,7 +11,10 @@ export class TtlCacheService implements OnModuleDestroy {
     private cache = new Map<string, CacheEntry<unknown>>();
     private cleanupInterval: NodeJS.Timeout | null = null;
 
-    constructor(private readonly ttlMs: number = 60 * 60 * 1000) {
+    constructor(
+        private readonly clock: ClockService,
+        private readonly ttlMs: number = 60 * 60 * 1000
+    ) {
         this.startCleanupTimer();
     }
 
@@ -18,7 +22,7 @@ export class TtlCacheService implements OnModuleDestroy {
         const ttl = customTtlMs || this.ttlMs;
         this.cache.set(key, {
             value,
-            expiresAt: Date.now() + ttl,
+            expiresAt: this.clock.currentTimeMs() + ttl,
         });
     }
 
@@ -27,7 +31,7 @@ export class TtlCacheService implements OnModuleDestroy {
         
         if (!entry) return null;
         
-        if (Date.now() > entry.expiresAt) {
+        if (this.clock.currentTimeMs() > entry.expiresAt) {
             this.cache.delete(key);
             return null;
         }
@@ -46,7 +50,7 @@ export class TtlCacheService implements OnModuleDestroy {
     private startCleanupTimer(): void {
         // Clean up expired entries every 5 minutes
         this.cleanupInterval = setInterval(() => {
-            const now = Date.now();
+            const now = this.clock.currentTimeMs();
             for (const [key, entry] of this.cache.entries()) {
                 if (now > entry.expiresAt) {
                     this.cache.delete(key);

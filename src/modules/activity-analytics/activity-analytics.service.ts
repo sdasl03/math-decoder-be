@@ -6,18 +6,21 @@ import {
 } from '../../models/models';
 import { AnalyticsRepository } from './repositories/analytics.repository';
 
+// Default analytics definition structure
+const DEFAULT_ANALYTICS_DEFINITION: ActivityAnalyticsDefinition = {
+  qualAnalytics: [{ name: 'Student feedback', type: 'string' }],
+  quantAnalytics: [
+    { name: 'Total number of submissions', type: 'number' },
+    { name: 'Total amount of time spent', type: 'number' },
+    { name: 'Total number of challenges completed', type: 'number' },
+  ],
+};
+
 @Injectable()
 export class ActivityAnalyticsService implements OnModuleInit {
   private readonly logger = new Logger(ActivityAnalyticsService.name);
 
-  private analyticsDefinition: ActivityAnalyticsDefinition = {
-    qualAnalytics: [{ name: 'Student feedback', type: 'string' }],
-    quantAnalytics: [
-      { name: 'Total number of submissions', type: 'number' },
-      { name: 'Total amount of time spent', type: 'number' },
-      { name: 'Total number of challenges completed', type: 'number' },
-    ],
-  };
+  private analyticsDefinition: ActivityAnalyticsDefinition = DEFAULT_ANALYTICS_DEFINITION;
 
   constructor(
     private readonly analyticsRepository: AnalyticsRepository,
