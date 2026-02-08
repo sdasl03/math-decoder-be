@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ActivityDeployService } from './activity-deploy.service';
 import type { ActivityDeployUrl } from './activity-deploy.service';
-import * as engineModels from 'src/models/engine-models';
+import type { ExerciseSubmission, GradingResult } from 'src/models/engine-models';
 import { MathDecoderActivityProvider } from '../activity-provider/math-decoder-activity-provider.class';
 
 @Controller('activity/:activityId/deploy')
@@ -20,8 +20,8 @@ export class ActivityDeployController {
   @Post('submit')
   submitExercise(
     @Param('activityId') activityId: string,
-    @Body() submission: engineModels.ExerciseSubmission,
-  ): engineModels.GradingResult {
+    @Body() submission: ExerciseSubmission,
+  ): GradingResult {
     // Ensure the submission matches the activity ID
     return this.activityProvider.gradeSubmission({
       ...submission,

@@ -2,15 +2,16 @@ import { Injectable } from "@nestjs/common";
 import { GradingStrategy, MathExercise, GradingResult } from "src/models/engine-models";
 import { AutoGradingStrategy } from "./auto-grading.class";
 import { ManualGradingStrategy } from "./manual-grading.class";
+import { ClockService } from "src/utils/clock.service";
 
-// grading/hybrid-grading.strategy.ts
 @Injectable()
 export class HybridGradingStrategy implements GradingStrategy {
     readonly method = 'hybrid' as const;
     
     constructor(
         private readonly autoGrading: AutoGradingStrategy,
-        private readonly manualGrading: ManualGradingStrategy
+        private readonly manualGrading: ManualGradingStrategy,
+        private readonly clock: ClockService
     ) {}
     
     canGrade(exercise: MathExercise): boolean {
@@ -26,7 +27,6 @@ export class HybridGradingStrategy implements GradingStrategy {
         exercise: MathExercise, 
         userAnswer: unknown,
     ): GradingResult {
-        // First, try automatic grading
         if (this.autoGrading.canGrade(exercise)) {
             const autoResult = this.autoGrading.grade(exercise, userAnswer);
             
@@ -35,15 +35,13 @@ export class HybridGradingStrategy implements GradingStrategy {
                 return autoResult;
             }
             
-            // Otherwise, mark for manual review but keep auto result for reference
             return {
                 ...autoResult,
                 feedback: `${autoResult.feedback} This has been flagged for manual review.`,
-                //metadata: {
+                metadata: {
                     ...autoResult.metadata,
-                    //autoGradedFirst: true,
-                    //requiresManualReview: true
-                //}
+                    processingTimeMs: autoResult.metadata?.processingTimeMs || 0
+                }
             };
         }
         

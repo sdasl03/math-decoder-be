@@ -12,7 +12,6 @@ export class ActivityParamsService {
   ];
 
   getActivityParams(): Param[] {
-    // Return list of parameters available in the configuration page
     return this.listOfParams;
   }
 }

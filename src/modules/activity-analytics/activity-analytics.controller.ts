@@ -11,9 +11,9 @@ export class ActivityAnalyticsController {
   ) {}
 
   @Post()
-  consultAnalytics(
+  async consultAnalytics(
     @Body() consultAnalyticsDto: ConsultAnalyticsDto,
-  ): UserAnalytics[] {
+  ): Promise<UserAnalytics[]> {
     return this.activityAnalyticsService.getActivityAnalytics(
       consultAnalyticsDto.activityId,
     );

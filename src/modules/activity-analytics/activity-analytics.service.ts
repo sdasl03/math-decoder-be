@@ -1,12 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   ActivityAnalytics, ActivityAnalyticsDefinition,
   UserAnalytics,
 } from '../../models/models';
+import { AnalyticsRepository } from './repositories/analytics.repository';
 
 @Injectable()
-export class ActivityAnalyticsService {
-  analyticsDefinition: ActivityAnalyticsDefinition = {
+export class ActivityAnalyticsService implements OnModuleInit {
+  private readonly logger = new Logger(ActivityAnalyticsService.name);
+
+  private analyticsDefinition: ActivityAnalyticsDefinition = {
     qualAnalytics: [{ name: 'Student feedback', type: 'string' }],
     quantAnalytics: [
       { name: 'Total number of submissions', type: 'number' },
@@ -15,70 +19,38 @@ export class ActivityAnalyticsService {
     ],
   };
 
-  activitiesAnalyticsData: UserAnalytics[] = [
-    {
-      inveniraStdID: 1001,
-      quantAnalytics: [
-        {
-          name: 'Total number of submissions',
-          value: 5,
-        },
-        {
-          name: 'Total amount of time spent',
-          value: 120,
-        },
-        {
-          name: 'Total number of challenges completed',
-          value: 3,
-        },
-      ],
-      qualAnalytics: [
-        {
-          name: 'Student feedback',
-          value: 'Great progress!',
-        },
-      ],
-    },
-    {
-      inveniraStdID: 1002,
-      quantAnalytics: [
-        {
-          name: 'Total number of submissions',
-          value: 2,
-        },
-        {
-          name: 'Total amount of time spent',
-          value: 45,
-        },
-        {
-          name: 'Total number of challenges completed',
-          value: 1,
-        },
-      ],
-      qualAnalytics: [
-        {
-          name: 'Student feedback',
-          value: 'Needs more practice.',
-        },
-      ],
-    },
-  ];
-  activitiesAnalaytics: ActivityAnalytics[] = [
-    {
-      id: 'activity-001',
-      userAnalytics: this.activitiesAnalyticsData,
-    },
-  ];
+  constructor(
+    private readonly analyticsRepository: AnalyticsRepository,
+    private readonly configService: ConfigService,
+  ) {}
 
-  getActivityAnalytics(activityId: string): UserAnalytics[] {
-    //return analytics for a specific activity
-    return (
-      this.activitiesAnalaytics.find((activity) => activity.id === activityId)
-        ?.userAnalytics || []
-    );
+  async onModuleInit(): Promise<void> {
+    try {
+      const nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
+      if (nodeEnv === 'development') {
+        this.logger.log('Initializing analytics seed data...');
+        await this.analyticsRepository.initializeSeedData();
+        this.logger.log('Analytics seed data initialized successfully');
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Failed to initialize Analytics seed data: ${message}`,
+        error instanceof Error ? error.stack : undefined
+      );
+      // Continue even if seed data fails - not critical
+    }
   }
+
+  async getActivityAnalytics(activityId: string): Promise<UserAnalytics[]> {
+    return await this.analyticsRepository.getAnalyticsForActivity(activityId);
+  }
+
   getListOfActivitiesAnalytics(): ActivityAnalyticsDefinition {
-    // Return list of all activities analytics
     return this.analyticsDefinition;
+  }
+
+  async getAllActivitiesAnalytics(): Promise<ActivityAnalytics[]> {
+    return await this.analyticsRepository.getAllActivityAnalytics();
   }
 }

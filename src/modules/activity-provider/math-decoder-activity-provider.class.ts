@@ -2,16 +2,23 @@ import { Injectable } from "@nestjs/common";
 import { MathExercise, ActivityConfig, MathActivity, GeneratorContext, ExerciseSubmission, GradingResult, GradingMethod, GradingContext } from "src/models/engine-models";
 import { CompositeExerciseGenerator } from "./generators/composite-generator.class";
 import { GradingStrategySelector } from "./grading/grading-selector.class";
+import { ClockService } from "src/utils/clock.service";
+import { UuidService } from "src/utils/uuid.service";
 
 @Injectable()
 export class MathDecoderActivityProvider {
     private exerciseCache = new Map<string, MathExercise>();
     
     constructor(
+        private readonly clock: ClockService,
+        private readonly uuid: UuidService,
         private readonly generator: CompositeExerciseGenerator,
         private readonly strategySelector: GradingStrategySelector,
     ) {}
     
+    generateActivityId(): string {
+        return this.uuid.generate();
+    }
     generateActivity(config: ActivityConfig): MathActivity {
         const ctx: GeneratorContext = {
             theme: config.theme,
@@ -54,16 +61,11 @@ export class MathDecoderActivityProvider {
         
         const result = strategy.grade(exercise, submission.answer, context);
         
-        // Log performance
-        console.log(`Graded exercise ${exercise.id} in ${Date.now() - startTime}ms`);
-        
         return result;
     }
     
     private determineGradingMethod(exercise: MathExercise): GradingMethod {
-        // Smart determination based on exercise properties
-        
-        // If solution is complex (array/object), prefer hybrid
+
         const isComplexSolution = Array.isArray(exercise.solution) || 
                                  (typeof exercise.solution === 'object' && exercise.solution !== null);
         
@@ -90,13 +92,13 @@ export class MathDecoderActivityProvider {
         const gradingMethod = this.analyzeGradingNeeds(orderedExercises, config.gradingMethod);
         
         return {
-            id: this.uuid(),
+            id: this.generateActivityId(),
             theme: config.theme,
             level: config.level,
             exercises: orderedExercises,
             grading: gradingMethod,
             metadata: {
-                createdAt: new Date(),
+                createdAt: this.clock.now(),
                 gradingMethod: gradingMethod,
                 autoGradableCount: this.countAutoGradableExercises(orderedExercises),
                 exerciseIds: orderedExercises.map(e => e.id)
@@ -108,7 +110,6 @@ export class MathDecoderActivityProvider {
         exercises: MathExercise[], 
         requestedMethod: GradingMethod
     ): GradingMethod {
-        // If specific method requested, use it (unless impossible)
         if (requestedMethod === 'manual') return 'manual';
         
         const canAllBeAutoGraded = exercises.every(ex => 
@@ -119,7 +120,6 @@ export class MathDecoderActivityProvider {
             return 'automatic';
         }
         
-        // Default to hybrid for mixed or complex exercises
         return 'hybrid';
     }
     
@@ -128,8 +128,6 @@ export class MathDecoderActivityProvider {
         return exercises.filter(ex => autoStrategy.canGrade(ex)).length;
     }
     
-    // ... rest of your existing methods
-    
     private orderExercises(exercises: MathExercise[]): MathExercise[] {
         return [...exercises].sort((a, b) => a.difficulty - b.difficulty);
     }
@@ -137,12 +135,5 @@ export class MathDecoderActivityProvider {
     selectExercises(candidates: MathExercise[], config: ActivityConfig): MathExercise[] {
         const level = config.level;
         return candidates.filter(e => Math.abs(e.difficulty - level) <= 1);
-    }
-    
-    uuid(): string {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
     }
 }

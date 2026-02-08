@@ -48,9 +48,7 @@ export interface ExerciseSubmission {
     exerciseId: string;
     answer: unknown;
 }
-// In your existing models, let's define these additional interfaces:
 
-// Add to your models/engine-models.ts or create grading-models.ts
 export interface GradingResult {
     exerciseId: string;
     isCorrect: boolean;
@@ -80,8 +78,6 @@ export interface StepGradingResult {
     feedback: string;
 }
 
-
-// grading/grading-strategy.interface.ts
 export interface GradingStrategy {
     readonly method: GradingMethod;
     

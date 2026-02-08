@@ -4,7 +4,6 @@ import { AutoGradingStrategy } from "./auto-grading.class";
 import { HybridGradingStrategy } from "./hybrid-grading.class";
 import { ManualGradingStrategy } from "./manual-grading.class";
 
-// grading/strategy-selector.service.ts
 @Injectable()
 export class GradingStrategySelector {
     constructor(

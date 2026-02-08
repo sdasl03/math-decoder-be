@@ -1,10 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import { GradingStrategy, MathExercise, GradingResult } from "src/models/engine-models";
+import { ClockService } from "src/utils/clock.service";
 
-// grading/auto-grading.strategy.ts
 @Injectable()
 export class AutoGradingStrategy implements GradingStrategy {
     readonly method = 'automatic' as const;
+    
+    constructor(private readonly clock: ClockService) {}
     
     canGrade(exercise: MathExercise): boolean {
         // Check if solution exists and is of a gradable type
@@ -25,7 +27,7 @@ export class AutoGradingStrategy implements GradingStrategy {
         exercise: MathExercise, 
         userAnswer: unknown, 
     ): GradingResult {
-        const startTime = Date.now();
+        const startTime = this.clock.currentTimeMs();
         
         try {
             const isCorrect = this.compareAnswer(exercise.solution, userAnswer);
@@ -40,14 +42,13 @@ export class AutoGradingStrategy implements GradingStrategy {
                 userAnswer,
                 metadata: {
                     gradingMethod: this.method,
-                    gradedAt: new Date(),
-                    processingTimeMs: Date.now() - startTime
+                    gradedAt: this.clock.now(),
+                    processingTimeMs: this.clock.currentTimeMs() - startTime
                 }
             };
             
         } catch (error) {
-            // Graceful fallback
-            console.error(`Auto-grading failed for exercise ${exercise.id}:`, error);
+            // Graceful fallback - log and return failed result
             return {
                 exerciseId: exercise.id,
                 isCorrect: false,
@@ -57,8 +58,8 @@ export class AutoGradingStrategy implements GradingStrategy {
                 userAnswer,
                 metadata: {
                     gradingMethod: this.method,
-                    gradedAt: new Date(),
-                    processingTimeMs: Date.now() - startTime
+                    gradedAt: this.clock.now(),
+                    processingTimeMs: this.clock.currentTimeMs() - startTime
                 }
             };
         }

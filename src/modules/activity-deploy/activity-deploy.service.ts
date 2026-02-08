@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 export interface ActivityDeployUrl {
   userUrl: string;
@@ -6,15 +7,20 @@ export interface ActivityDeployUrl {
 
 @Injectable()
 export class ActivityDeployService {
-  deployUrl: ActivityDeployUrl = { userUrl: 'https://deploy.example.com/' };
+  private readonly logger = new Logger(ActivityDeployService.name);
+  private readonly deployBaseUrl: string;
 
-  getActivityDeployUrl(activityId: string): ActivityDeployUrl {
-    // generates space to store analytics for this activity instance, generate an activityID(for it is a new instance)
-    console.log(`Deploying activity with activityId: ${activityId}`);
-    //const activityId = `activity-${Math.random().toString(36).substr(2, 9)}`;
-    // Return URL to access the deployed activity
-    return this.deployUrl;
+  constructor(private readonly configService: ConfigService) {
+    this.deployBaseUrl = this.configService.get<string>(
+      'DEPLOY_BASE_URL',
+      'https://deploy.example.com/'
+    );
   }
 
-  
+  getActivityDeployUrl(activityId: string): ActivityDeployUrl {
+    this.logger.debug(`Retrieving deploy URL for activity: ${activityId}`);
+    return {
+      userUrl: `${this.deployBaseUrl}activities/${activityId}`
+    };
+  }
 }

@@ -1,13 +1,18 @@
-import { Injectable } from "@nestjs/common/decorators/core/injectable.decorator";
-import { GeneratorContext, MathExercise, MathExerciseGenerator } from "src/models/engine-models";
+import { Injectable } from '@nestjs/common';
+import { GeneratorContext, MathExercise, MathExerciseGenerator } from 'src/models/engine-models';
 
 @Injectable()
-export class CompositeExerciseGenerator
-  implements MathExerciseGenerator {
-
-  constructor(
-    private readonly generators: MathExerciseGenerator[],
-  ) {}
+export class CompositeExerciseGenerator implements MathExerciseGenerator {
+  private generators: MathExerciseGenerator[];
+  
+  constructor() {
+    this.generators = [];
+  }
+  registerGenerator(generator: MathExerciseGenerator): void {
+    if (!this.generators.includes(generator)) {
+      this.generators.push(generator);
+    }
+  }
 
   canGenerate(ctx: GeneratorContext): boolean {
     return this.generators.some(g => g.canGenerate(ctx));

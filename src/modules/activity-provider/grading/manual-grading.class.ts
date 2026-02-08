@@ -1,13 +1,14 @@
 import { Injectable } from "@nestjs/common";
 import { GradingStrategy, MathExercise, GradingResult } from "src/models/engine-models";
+import { ClockService } from "src/utils/clock.service";
 
-// grading/manual-grading.strategy.ts
 @Injectable()
 export class ManualGradingStrategy implements GradingStrategy {
     readonly method = 'manual' as const;
     
+    constructor(private readonly clock: ClockService) {}
+    
     canGrade(exercise: MathExercise): boolean {
-        // Manual grading can handle everything
         return exercise !== undefined;
     }
     
@@ -28,7 +29,7 @@ export class ManualGradingStrategy implements GradingStrategy {
             userAnswer,
             metadata: {
                 gradingMethod: this.method,
-                gradedAt: new Date(),
+                gradedAt: this.clock.now(),
                 processingTimeMs: 0
             }
         };
